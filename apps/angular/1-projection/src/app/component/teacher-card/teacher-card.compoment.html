@@ -1,0 +1,5 @@
+<app-card
+    [list]="(teachers$ | async) ?? []"
+    iconPath="assets/img/teacher.png"
+    customClass="bg-light-red"
+/>

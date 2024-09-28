@@ -1,40 +1,38 @@
-import { Component, OnInit } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
+
+import { Observable } from 'rxjs';
+
 import { FakeHttpService } from '../../data-access/fake-http.service';
+import { Store } from '../../data-access/store';
 import { TeacherStore } from '../../data-access/teacher.store';
-import { CardType } from '../../model/card.model';
-import { Teacher } from '../../model/teacher.model';
+import { StoreItem, Teacher } from '../../model';
 import { CardComponent } from '../../ui/card/card.component';
 
 @Component({
   selector: 'app-teacher-card',
-  template: `
-    <app-card
-      [list]="teachers"
-      [type]="cardType"
-      customClass="bg-light-red"></app-card>
-  `,
-  styles: [
-    `
-      ::ng-deep .bg-light-red {
-        background-color: rgba(250, 0, 0, 0.1);
-      }
-    `,
-  ],
+  templateUrl: 'teacher-card.compoment.html',
+  styleUrl: 'teacher-card.compoment.scss',
   standalone: true,
-  imports: [CardComponent],
+  providers: [
+    {
+      provide: Store,
+      useExisting: TeacherStore,
+    },
+  ],
+  imports: [AsyncPipe, CardComponent],
 })
 export class TeacherCardComponent implements OnInit {
-  teachers: Teacher[] = [];
-  cardType = CardType.TEACHER;
+  private readonly http = inject(FakeHttpService);
+  private readonly store = inject(TeacherStore);
 
-  constructor(
-    private http: FakeHttpService,
-    private store: TeacherStore,
-  ) {}
+  public get teachers$(): Observable<StoreItem[]> {
+    return this.store.items$;
+  }
 
   ngOnInit(): void {
-    this.http.fetchTeachers$.subscribe((t) => this.store.addAll(t));
-
-    this.store.teachers$.subscribe((t) => (this.teachers = t));
+    this.http.fetchTeachers$.subscribe((teachers: Teacher[]) => {
+      this.store.set(teachers.map(TeacherStore.convertTeacherToStoreItem));
+    });
   }
 }

@@ -1,23 +1,22 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { Teacher } from '../model/teacher.model';
+import { StoreItem, Teacher } from '../model/';
+import { randTeacher } from './fake-http.service';
+import { Store } from './store';
+
+interface TeacherStoreItem extends Teacher, StoreItem {}
 
 @Injectable({
   providedIn: 'root',
 })
-export class TeacherStore {
-  private teachers = new BehaviorSubject<Teacher[]>([]);
-  teachers$ = this.teachers.asObservable();
-
-  addAll(teachers: Teacher[]) {
-    this.teachers.next(teachers);
+export class TeacherStore extends Store {
+  public static convertTeacherToStoreItem(item: Teacher): TeacherStoreItem {
+    return {
+      ...item,
+      name: `${item.firstName} ${item.lastName}`,
+    };
   }
 
-  addOne(teacher: Teacher) {
-    this.teachers.next([...this.teachers.value, teacher]);
-  }
-
-  deleteOne(id: number) {
-    this.teachers.next(this.teachers.value.filter((t) => t.id !== id));
+  public create(): TeacherStoreItem {
+    return TeacherStore.convertTeacherToStoreItem(randTeacher());
   }
 }
